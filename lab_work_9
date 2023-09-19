@@ -42,24 +42,28 @@ def get_data():
         line = data.readline().split()
         user_name = entry_user_name.get()
         password = entry_password.get()
-        result = False
-        while True:
-            if visener_encrypt(user_name) in line:
-                result = True
-                break
-            else:
-                line = data.readline().split()
-                result = False
-                if len(line) == 0:
-                    break
-        if result == False:
-            errmsg.set("")
-            entry_user_name["foreground"] = "black"
-            data.write(f"{visener_encrypt(user_name)} {visener_encrypt(password)}, ")
-            welcome_game()
+        if user_name == "" or password == "":
+            showinfo(title = "Регистрация/Авторизация", message = "Поля не должны быть пустыми",
+                     detail = "Введите логин и пароль", default = OK)
         else:
-            errmsg.set("Это имя уже занято")
-            entry_user_name["foreground"] = "red"
+            result = False
+            while True:
+                if visener_encrypt(user_name) in line:
+                    result = True
+                    break
+                else:
+                    line = data.readline().split()
+                    result = False
+                    if len(line) == 0:
+                        break
+            if result == False:
+                errmsg.set("")
+                entry_user_name["foreground"] = "black"
+                data.write(f"{visener_encrypt(user_name)} {visener_encrypt(password)}, ")
+                welcome_game()
+            else:
+                errmsg.set("Это имя уже занято")
+                entry_user_name["foreground"] = "red"
 def get_data_2():
     with open("data.txt", "a+") as data:
         def strip(line):
@@ -69,21 +73,25 @@ def get_data_2():
         line = list(map(strip, re.split(r'[\n,]+', data.readline())))
         user_name = entry_user_name.get()
         password = entry_password.get()
-        result = False
-        while True:
-            if visener_encrypt(user_name) + " " + visener_encrypt(password) in line:
-                result = True
-                break
-            else:
-                line = list(map(strip, re.split(r'[\n,]+', data.readline())))
-                result = False
-                if len(line) == 1:
-                    break
-        if result == False:
-            errmsg.set("Неверно. Проверьте логин/пароль")
-            entry_user_name["foreground"] = "black"
+        if user_name == "" or password == "":
+            showinfo(title = "Регистрация/Авторизация", message = "Поля не должны быть пустыми",
+                     detail = "Введите логин и пароль", default = OK)
         else:
-            welcome_game()
+            result = False
+            while True:
+                if visener_encrypt(user_name) + " " + visener_encrypt(password) in line:
+                    result = True
+                    break
+                else:
+                    line = list(map(strip, re.split(r'[\n,]+', data.readline())))
+                    result = False
+                    if len(line) == 1:
+                        break
+            if result == False:
+                errmsg.set("Неверно. Проверьте логин/пароль")
+                entry_user_name["foreground"] = "black"
+            else:
+                welcome_game()
 
 def welcome_game():
     frame.destroy()
@@ -131,4 +139,5 @@ label_error = ttk.Label(frame, foreground="red", textvariable=errmsg, wraplength
 label_error.place(x = 480, y = 120)
 
 root.mainloop()
+
 
