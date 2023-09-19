@@ -1,0 +1,134 @@
+from tkinter import*
+from tkinter import ttk
+from tkinter import font
+from tkinter.messagebox import showinfo, OK, INFO
+import re
+user_name = ""
+password = ""
+##шифр виженера. ключевое слово "hailstorm" задает переменное количество сдвигов;
+##в этом слове для каждой буквы определяется ее код (номер) в алфавите; первая буква
+##задает число сдвигов для первой буквы пароля, вторая буква - для второй и так далее;
+##длина ключевого слова = 9, если шифруемое слово длиннее, то для символов №10, №11 и т д число сдвигов определяется с начала ключевого слова
+##регистр учитывается; если шифруемый символ - это цифра, то для нее тоже выбирается количество сдвигов.
+##
+def visener_encrypt(text, key = "hailstorm"): 
+    encryption = "" 
+    lst = []
+    for k in key:
+        lst.append(ord(k) - ord('a')) ##код каждой буквы слова "hailstorm" в алфавите = количество сдвигов
+    for i, t in enumerate(text):
+        if i >= len(lst): #если слово еще шифруется, то начинаем читать ключевое слова с самого начала
+            i = 0
+        elif t.islower():
+            t_index = ord(t) - ord('a') #номер буквы в алфавите
+            t_shifted = (t_index + lst[i])%26 + ord('a') #код новой буквы после сдвига и его перевод в код ASCII
+            t_new = chr(t_shifted) #получение символа по его коду ASCII
+            encryption += t_new #добавление к строке зашифрованного слова
+        elif t.isupper():
+            t_index = ord(t) - ord('A')
+            t_shifted = (t_index + lst[i])%26 + ord('A')
+            t_new = chr(t_shifted)
+            encryption += t_new
+        elif t.isdigit():
+            t_new = (int(t) + lst[i])%10 #аналогично, но т.к. цифр 10, то делим на 10
+            encryption += str(t_new)
+        else:
+            encryption += t #другие символы оставляем без изменений
+    return encryption
+def get_data():
+    with open("data.txt", "a+") as data:
+        global user_name, password
+        data.seek(0)
+        line = data.readline().split()
+        user_name = entry_user_name.get()
+        password = entry_password.get()
+        result = False
+        while True:
+            if visener_encrypt(user_name) in line:
+                result = True
+                break
+            else:
+                line = data.readline().split()
+                result = False
+                if len(line) == 0:
+                    break
+        if result == False:
+            errmsg.set("")
+            entry_user_name["foreground"] = "black"
+            data.write(f"{visener_encrypt(user_name)} {visener_encrypt(password)}, ")
+            welcome_game()
+        else:
+            errmsg.set("Это имя уже занято")
+            entry_user_name["foreground"] = "red"
+def get_data_2():
+    with open("data.txt", "a+") as data:
+        def strip(line):
+            return line.strip()
+        global user_name, password
+        data.seek(0)
+        line = list(map(strip, re.split(r'[\n,]+', data.readline())))
+        user_name = entry_user_name.get()
+        password = entry_password.get()
+        result = False
+        while True:
+            if visener_encrypt(user_name) + " " + visener_encrypt(password) in line:
+                result = True
+                break
+            else:
+                line = list(map(strip, re.split(r'[\n,]+', data.readline())))
+                result = False
+                if len(line) == 1:
+                    break
+        if result == False:
+            errmsg.set("Неверно. Проверьте логин/пароль")
+            entry_user_name["foreground"] = "black"
+        else:
+            welcome_game()
+
+def welcome_game():
+    frame.destroy()
+    showinfo(title = "Регистрация/Авторизация", message = "Вы успешно зарегистрировались/авторизовались!",
+              detail = "Нажмите OK, чтобы начать игру", default = OK)
+    
+root = Tk()
+root.title("Игра")
+root.geometry("700x680+280-50")
+
+frame = ttk.Frame(height = 400, width = 700)
+frame.place(x = 0, y = 130, anchor = NW)
+
+font1 = font.Font(family= "Verdana", size=14, weight="bold", slant="italic")
+
+label_name_1 = ttk.Label(frame, text = "Регистрация и авторизация", font = font1)
+label_name_1.place(x = 200, y = 40)
+
+label_name_2 = ttk.Label(frame, text = "Для регистрации введите новые логин и пароль")
+label_name_2.place(x = 230, y = 80)
+
+label_name_3 = ttk.Label(frame, text = "Если уже зарегистрированы, введите свой логин и пароль, чтобы начать игру")
+label_name_3.place(x = 155, y = 98)
+
+entry_user_name = ttk.Entry(frame, width =  26)
+entry_user_name.place(x = 295, y = 120)
+
+entry_password = ttk.Entry(frame, width = 26)
+entry_password.place(x = 295, y = 150)
+
+btn_get = ttk.Button(frame, text = "Регистрация", command = get_data)
+btn_get.place(x = 295, y = 180)
+
+btn_get_2 = ttk.Button(frame, text = "Вход", command = get_data_2)
+btn_get_2.place(x = 380, y = 180)
+
+label_user_name = ttk.Label(frame, text = "Логин")
+label_user_name.place(x = 240, y = 120)
+
+label_password = ttk.Label(frame, text = "Пароль")
+label_password.place(x = 240, y = 150)
+
+errmsg = StringVar()
+label_error = ttk.Label(frame, foreground="red", textvariable=errmsg, wraplength=250)
+label_error.place(x = 480, y = 120)
+
+root.mainloop()
+
